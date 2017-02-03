@@ -104,4 +104,7 @@
     <string name="app_picker_dialog_title">App auswählen</string>
     <string name="app_picker_activity_select_title">Aktion wählen</string>
 
+    <!-- accessibility label for button to open running apps prefscreen [CHAR LIMIT=NONE] -->
+    <string name="accessibility_quick_settings_running_services">Laufende Dienste öffnen.</string>
+
 </resources>
