@@ -91,6 +91,7 @@ public class QSContainerImpl extends FrameLayout implements
     private StatusBarHeaderMachine mStatusBarHeaderMachine;
     private Drawable mCurrentBackground;
     private boolean mLandscape;
+    private boolean mQsBackgroundAlpha;
 
     public QSContainerImpl(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -123,6 +124,7 @@ public class QSContainerImpl extends FrameLayout implements
 
 
         mBackgroundImage = findViewById(R.id.qs_header_image_view);
+        mBackgroundImage.setClipToOutline(true);
         updateResources();
 
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
@@ -164,7 +166,7 @@ public class QSContainerImpl extends FrameLayout implements
         // Hide the backgrounds when in landscape mode.
         if (mLandscape) {
             mBackgroundGradient.setVisibility(View.INVISIBLE);
-        } else {
+        } else if (!mQsBackgroundAlpha) {
             mBackgroundGradient.setVisibility(View.VISIBLE);
         }
 
@@ -247,16 +249,38 @@ public class QSContainerImpl extends FrameLayout implements
                 com.android.internal.R.dimen.quick_qs_offset_height) + (mHeaderImageEnabled ?
                 mContext.getResources().getDimensionPixelSize(R.dimen.qs_header_image_offset) : 0);
 
-        int statusBarSideMargin = mContext.getResources().getDimensionPixelSize(
-                R.dimen.qs_header_image_side_margin);
+        LayoutParams layoutParams = (LayoutParams) mQSPanelContainer.getLayoutParams();
+        layoutParams.topMargin = topMargin;
+        mQSPanelContainer.setLayoutParams(layoutParams);
 
-        ((LayoutParams) mQSPanel.getLayoutParams()).topMargin = topMargin;
-        mQSPanel.setLayoutParams(mQSPanel.getLayoutParams());
+        mSideMargins = getResources().getDimensionPixelSize(R.dimen.notification_side_paddings);
+        mContentPaddingStart = getResources().getDimensionPixelSize(
+                com.android.internal.R.dimen.notification_content_margin_start);
+        int newPaddingEnd = getResources().getDimensionPixelSize(
+                com.android.internal.R.dimen.notification_content_margin_end);
+        boolean marginsChanged = newPaddingEnd != mContentPaddingEnd;
+        mContentPaddingEnd = newPaddingEnd;
+        if (marginsChanged) {
+            updatePaddingsAndMargins();
+        }
+
+        int statusBarSideMargin = mHeaderImageEnabled ? mContext.getResources().getDimensionPixelSize(
+                R.dimen.qs_header_image_side_margin) : 0;
+
+        // always add the margin below the statusbar with or without image
+        int statusBarBottomMargin = mContext.getResources().getDimensionPixelSize(
+                R.dimen.qs_header_image_bottom_margin);
 
         ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) mStatusBarBackground.getLayoutParams();
         lp.height = topMargin;
         lp.setMargins(statusBarSideMargin, 0, statusBarSideMargin, 0);
         mStatusBarBackground.setLayoutParams(lp);
+
+        if (mHeaderImageEnabled) {
+            mStatusBarBackground.setBackgroundColor(Color.TRANSPARENT);
+        } else {
+            mStatusBarBackground.setBackgroundColor(Color.BLACK);
+        }
     }
 
     /**
