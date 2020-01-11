@@ -21,12 +21,14 @@ import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 
 import android.content.Context;
 import android.content.res.Configuration;
+import android.database.ContentObserver;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.graphics.Color;
 import android.provider.Settings;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -86,15 +88,21 @@ public class QSContainerImpl extends FrameLayout implements
     private int mContentPaddingEnd = -1;
     private boolean mAnimateBottomOnNextLayout;
 
+    // omni additions start
+    private Drawable mQsBackGround;
     private boolean mHeaderImageEnabled;
     private ImageView mBackgroundImage;
     private StatusBarHeaderMachine mStatusBarHeaderMachine;
     private Drawable mCurrentBackground;
     private boolean mLandscape;
     private int mHeaderShadow = 0;
+    private int mHeaderImageHeight;
 
     public QSContainerImpl(Context context, AttributeSet attrs) {
         super(context, attrs);
+        Handler mHandler = new Handler();
+        SettingsObserver settingsObserver = new SettingsObserver(mHandler);
+        settingsObserver.observe();
         mStatusBarHeaderMachine = new StatusBarHeaderMachine(context);
     }
 
@@ -109,8 +117,10 @@ public class QSContainerImpl extends FrameLayout implements
         mDragHandle = findViewById(R.id.qs_drag_handle_view);
         mBackground = findViewById(R.id.quick_settings_background);
         mStatusBarBackground = findViewById(R.id.quick_settings_status_bar_background);
+        mQsBackGround = getContext().getDrawable(R.drawable.qs_background_primary);
         mBackgroundImage = findViewById(R.id.qs_header_image_view);
         mBackgroundImage.setClipToOutline(true);
+        updateSettings();
         updateResources();
         mHeader.getHeaderQsPanel().setMediaVisibilityChangedListener((visible) -> {
             if (mHeader.getHeaderQsPanel().isShown()) {
@@ -122,7 +132,6 @@ public class QSContainerImpl extends FrameLayout implements
                 mAnimateBottomOnNextLayout = true;
             }
         });
-
 
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
     }
@@ -164,7 +173,31 @@ public class QSContainerImpl extends FrameLayout implements
         mLandscape = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE;
 
         updateResources();
+        updateSettings();
         mSizePoint.set(0, 0); // Will be retrieved on next measure pass.
+    }
+
+    private class SettingsObserver extends ContentObserver {
+        SettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            getContext().getContentResolver().registerContentObserver(Settings.System
+                            .getUriFor(Settings.System.STATUS_BAR_CUSTOM_HEADER_HEIGHT), false,
+                    this, UserHandle.USER_ALL);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            updateSettings();
+        }
+    }
+
+    private void updateSettings() {
+        updateHeaderImageHeight();
+        updateResources();
+        updateStatusbarVisibility();
     }
 
     @Override
@@ -250,8 +283,7 @@ public class QSContainerImpl extends FrameLayout implements
     }
 
     private void updateResources() {
-        int topMargin = mContext.getResources().getDimensionPixelSize(
-                com.android.internal.R.dimen.quick_qs_offset_height);
+        int topMargin = mHeaderImageHeight;
 
         LayoutParams layoutParams = (LayoutParams) mQSPanelContainer.getLayoutParams();
         layoutParams.topMargin = topMargin;
@@ -438,5 +470,12 @@ public class QSContainerImpl extends FrameLayout implements
         mStatusBarBackground.setVisibility(hideStatusbar ? View.INVISIBLE : View.VISIBLE);
 
         applyHeaderBackgroundShadow();
+    }
+
+    private void updateHeaderImageHeight() {
+        mHeaderImageHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 
+            Settings.System.getIntForUser(getContext().getContentResolver(),
+                Settings.System.STATUS_BAR_CUSTOM_HEADER_HEIGHT, 25,
+                UserHandle.USER_CURRENT), getContext().getResources().getDisplayMetrics());
     }
 }

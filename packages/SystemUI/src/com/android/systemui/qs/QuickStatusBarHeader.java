@@ -44,6 +44,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.util.MathUtils;
 import android.util.Pair;
+import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.DisplayCutout;
 import android.view.View;
@@ -153,6 +154,8 @@ public class QuickStatusBarHeader extends RelativeLayout implements
     private int mRingerMode = AudioManager.RINGER_MODE_NORMAL;
     private AlarmManager.AlarmClockInfo mNextAlarm;
 
+    private int mHeaderImageHeight;
+
     private ImageView mNextAlarmIcon;
     /** {@link TextView} containing the actual text indicating when the next alarm will go off. */
     private TextView mNextAlarmTextView;
@@ -178,6 +181,28 @@ public class QuickStatusBarHeader extends RelativeLayout implements
     private final UiEventLogger mUiEventLogger;
     // Used for RingerModeTracker
     private final LifecycleRegistry mLifecycle = new LifecycleRegistry(this);
+
+    private class OmniSettingsObserver extends ContentObserver {
+        OmniSettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            ContentResolver resolver = getContext().getContentResolver();
+            resolver.registerContentObserver(Settings.System
+                    .getUriFor(Settings.System.STATUS_BAR_CUSTOM_HEADER), false,
+                    this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_CUSTOM_HEADER_HEIGHT), false,
+                    this, UserHandle.USER_ALL);
+            }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            updateSettings();
+        }
+    }
+    private OmniSettingsObserver mOmniSettingsObserver = new OmniSettingsObserver(mHandler); 
 
     private boolean mHasTopCutout = false;
     private int mStatusBarPaddingTop = 0;
@@ -463,7 +488,8 @@ public class QuickStatusBarHeader extends RelativeLayout implements
         mHeaderTextContainerView.setLayoutParams(mHeaderTextContainerView.getLayoutParams());
 
         int topMargin = resources.getDimensionPixelSize(
-                com.android.internal.R.dimen.quick_qs_offset_height);
+                com.android.internal.R.dimen.quick_qs_offset_height) + (mHeaderImageEnabled ?
+                mHeaderImageHeight);
 
         mSystemIconsView.getLayoutParams().height = topMargin;
         mSystemIconsView.setLayoutParams(mSystemIconsView.getLayoutParams());
@@ -492,6 +518,9 @@ public class QuickStatusBarHeader extends RelativeLayout implements
         if (mQsDisabled) {
             lp.height = topMargin;
         } else {
+            if (mHeaderImageEnabled) {
+                qsHeight += mHeaderImageHeight;
+            } else {
             lp.height = WRAP_CONTENT;
         }
         setLayoutParams(lp);
@@ -887,5 +916,30 @@ public class QuickStatusBarHeader extends RelativeLayout implements
 
     private boolean getChipEnabled() {
         return mMicCameraIndicatorsEnabled || mAllIndicatorsEnabled;
+    }
+
+    private void updateSettings() {
+        mHeaderImageEnabled = Settings.System.getIntForUser(getContext().getContentResolver(),
+                Settings.System.STATUS_BAR_CUSTOM_HEADER, 0,
+                UserHandle.USER_CURRENT) == 1;
+        updateHeaderImage();
+        updateResources();
+        updateStatusbarProperties();
+    }
+
+    // Update color schemes in landscape to use wallpaperTextColor
+    private void updateStatusbarProperties() {
+        boolean shouldUseWallpaperTextColor = mLandscape && !mHeaderImageEnabled;
+        mClockView.useWallpaperTextColor(shouldUseWallpaperTextColor);
+    }
+
+    private void updateHeaderImage() {
+        mHeaderImageEnabled = Settings.System.getIntForUser(getContext().getContentResolver(),
+                Settings.System.STATUS_BAR_CUSTOM_HEADER, 0,
+                UserHandle.USER_CURRENT) == 1;
+        mHeaderImageHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 
+            Settings.System.getIntForUser(getContext().getContentResolver(),
+                Settings.System.STATUS_BAR_CUSTOM_HEADER_HEIGHT, 25,
+                UserHandle.USER_CURRENT), getContext().getResources().getDisplayMetrics());
     }
 }
