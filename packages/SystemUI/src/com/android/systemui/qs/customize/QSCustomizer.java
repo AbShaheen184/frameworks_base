@@ -90,6 +90,7 @@ public class QSCustomizer extends LinearLayout implements OnMenuItemClickListene
     private boolean mOpening;
     private boolean mIsShowingNavBackdrop;
     private boolean mHeaderImageEnabled;
+    private int mHeaderImageHeight;
     private UiEventLogger mUiEventLogger = new UiEventLoggerImpl();
     private GridLayoutManager mGlm;
 
@@ -159,8 +160,7 @@ public class QSCustomizer extends LinearLayout implements OnMenuItemClickListene
         lp.height = mContext.getResources().getDimensionPixelSize(
                 com.android.internal.R.dimen.quick_qs_offset_height);
         if (mHeaderImageEnabled) {
-            lp.height += mContext.getResources().getDimensionPixelSize(
-                    R.dimen.qs_header_image_offset);
+            lp.height += mHeaderImageHeight;
         }
         mTransparentView.setLayoutParams(lp);
         int columns;
@@ -196,6 +196,16 @@ public class QSCustomizer extends LinearLayout implements OnMenuItemClickListene
         mHeaderImageEnabled = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.STATUS_BAR_CUSTOM_HEADER, 0,
                 UserHandle.USER_CURRENT) == 1;
+    }
+
+    private void updateHeaderImage() {
+        mHeaderImageEnabled = Settings.System.getIntForUser(getContext().getContentResolver(),
+                Settings.System.STATUS_BAR_CUSTOM_HEADER, 0,
+                UserHandle.USER_CURRENT) == 1;
+        mHeaderImageHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 
+            Settings.System.getIntForUser(getContext().getContentResolver(),
+                Settings.System.STATUS_BAR_CUSTOM_HEADER_HEIGHT, 25,
+                UserHandle.USER_CURRENT), getContext().getResources().getDisplayMetrics());
     }
 
     public void setHost(QSTileHost host) {
