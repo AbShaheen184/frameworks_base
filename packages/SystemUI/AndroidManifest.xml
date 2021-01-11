@@ -271,11 +271,6 @@
     <!-- Permission to make accessibility service access Bubbles -->
     <uses-permission android:name="android.permission.ADD_TRUSTED_DISPLAY" />
 
-
-    <!-- Pulse -->
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-
     <!-- Asus Long screenshot -->
     <uses-permission android:name="com.asus.stitchimage.permission.EXPORTED_FOR_ASUS_APPS"/>
 
