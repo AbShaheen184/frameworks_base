@@ -551,7 +551,7 @@ public class PulseControllerImpl
         if (mStreamHandler != null) {
             if (!mLinked) {
                 setVisualizerLocked(true);
-                mStreamHandler.link();
+                mStreamHandler.link(0);
                 mLinked = true;
                 if (!mRenderLoadedOnce) {
                     mRenderLoadedOnce = true;
