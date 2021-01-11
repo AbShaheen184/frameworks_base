@@ -76,7 +76,9 @@ public class SolidLineRenderer extends Renderer {
 
     private void loadValueAnimators() {
         if (mValueAnimators != null) {
-            stopAnimation(mValueAnimators.length);
+            for (int i = 0; i < mValueAnimators.length; i++) {
+                mValueAnimators[i].cancel();
+            }
         }
         mValueAnimators = new ValueAnimator[mUnits];
         final boolean isVertical = mVertical;
@@ -96,16 +98,6 @@ public class SolidLineRenderer extends Renderer {
                     postInvalidate();
                 }
             });
-        }
-    }
-
-    private void stopAnimation(int index) {
-        if (mValueAnimators == null) return;
-        for (int i = 0; i < index; i++) {
-            // prevent onAnimationUpdate existing listeners (by stopping them) to call
-            // a wrong mFFTPoints index after mUnits gets updated by the user
-            mValueAnimators[i].removeAllUpdateListeners();
-            mValueAnimators[i].cancel();
         }
     }
 
@@ -252,12 +244,11 @@ public class SolidLineRenderer extends Renderer {
             mSmoothingEnabled = Settings.Secure.getIntForUser(resolver,
                     Settings.Secure.PULSE_SMOOTHING_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
 
-            int units = Settings.Secure.getIntForUser(
+            int oldUnits = mUnits;
+            mUnits = Settings.Secure.getIntForUser(
                     resolver, Settings.Secure.PULSE_SOLID_UNITS_COUNT, 64,
                     UserHandle.USER_CURRENT);
-            if (units != mUnits) {
-                stopAnimation(mUnits);
-                mUnits = units;
+            if (mUnits != oldUnits) {
                 mFFTPoints = new float[mUnits * 4];
                 if (mSmoothingEnabled) {
                     setupFFTAverage();
