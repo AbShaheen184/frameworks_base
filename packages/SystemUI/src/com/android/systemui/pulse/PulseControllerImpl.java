@@ -226,6 +226,7 @@ public class PulseControllerImpl
 
     public void notifyKeyguardGoingAway() {
         if (mLsPulseEnabled) {
+            detachPulseFrom(getLsVisualizer(), allowNavPulse(getNavbarFrame())/*keep linked*/);
             mKeyguardGoingAway = true;
             updatePulseVisibility();
             mKeyguardGoingAway = false;
@@ -233,24 +234,14 @@ public class PulseControllerImpl
     }
 
     private void updatePulseVisibility() {
-        if (mStatusbar == null) return;
-
         NavigationBarFrame nv = getNavbarFrame();
         VisualizerView vv = getLsVisualizer();
-        boolean allowAmbPulse = vv != null && vv.isAttached()
-                && mAmbPulseEnabled && mKeyguardShowing && mDozing;
-        boolean allowLsPulse = vv != null && vv.isAttached()
-                && mLsPulseEnabled && mKeyguardShowing && !mDozing;
-        boolean allowNavPulse = nv!= null && nv.isAttached()
-            && mNavPulseEnabled && !mKeyguardShowing;
-
-        if (mKeyguardGoingAway) {
-            detachPulseFrom(vv, allowNavPulse/*keep linked*/);
-            return;
-        }
+        boolean allowAmbPulse = allowAmbPulse(vv);
+        boolean allowLsPulse = allowLsPulse(vv);
+        boolean allowNavPulse = allowNavPulse(nv);
 
         if (!allowNavPulse) {
-            detachPulseFrom(nv, allowLsPulse || allowAmbPulse/*keep linked*/);
+            detachPulseFrom(nv, allowLsPulse/*keep linked*/);
         }
         if (!allowLsPulse && !allowAmbPulse) {
             detachPulseFrom(vv, allowNavPulse/*keep linked*/);
@@ -290,6 +281,22 @@ public class PulseControllerImpl
 
     private VisualizerView getLsVisualizer() {
         return mStatusbar != null ? mStatusbar.getLsVisualizer() : null;
+    }
+
+    private boolean allowAmbPulse(VisualizerView v) {
+        if (v == null) return false;
+        return v.isAttached() && mAmbPulseEnabled && mKeyguardShowing && mDozing;
+    }
+
+    private boolean allowNavPulse(NavigationBarFrame v) {
+        if (v == null) return false;
+        return v.isAttached() && mNavPulseEnabled && !mKeyguardShowing;
+    }
+
+    private boolean allowLsPulse(VisualizerView v) {
+        if (v == null) return false;
+        return v.isAttached() && mLsPulseEnabled
+                && mKeyguardShowing && !mDozing;
     }
 
     @Inject
