@@ -48,4 +48,6 @@
     <dimen name="status_bar_battery_icon_circle_width">13.5dp</dimen>
 
     <dimen name="keyguard_security_fod_view_margin">140dp</dimen>
+
+    <dimen name="keyguard_charging_animation_margin">30dp</dimen>
 </resources>
