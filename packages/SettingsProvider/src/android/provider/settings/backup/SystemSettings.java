@@ -99,5 +99,6 @@ public class SystemSettings {
         Settings.System.AOD_NOTIFICATION_PULSE_CLEAR,
         Settings.System.NOTIFICATION_PULSE_ACCENT,
         Settings.System.NOTIFICATION_PULSE_COLOR_AUTOMATIC,
+        Settings.System.QS_MEDIA_PLAYER,
     };
 }
