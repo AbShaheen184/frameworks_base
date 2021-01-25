@@ -136,6 +136,7 @@ public class QSPanel extends LinearLayout implements Tunable, Callback, Brightne
     private int mContentMarginEnd;
     private int mVisualTilePadding;
     private boolean mUsingHorizontalLayout;
+    private boolean mBrightnessSliderEnabled;
 
     private QSCustomizer mCustomizePanel;
     private Record mDetailRecord;
@@ -396,7 +397,13 @@ public class QSPanel extends LinearLayout implements Tunable, Callback, Brightne
     }
 
     private void updateViewVisibilityForTuningValue(View view, @Nullable String newValue) {
-        view.setVisibility(TunerService.parseIntegerSwitch(newValue, true) ? VISIBLE : GONE);
+        if (view == mBrightnessView)
+            mBrightnessSliderEnabled = TunerService.parseIntegerSwitch(newValue, true);
+        if (isHorizontalLayout()) {
+            view.setVisibility(TunerService.parseIntegerSwitch(newValue, true) ? VISIBLE : INVISIBLE);
+        } else {
+            view.setVisibility(TunerService.parseIntegerSwitch(newValue, true) ? VISIBLE : View.GONE);
+        }
     }
 
     public void openDetails(String subPanel) {
@@ -499,6 +506,13 @@ public class QSPanel extends LinearLayout implements Tunable, Callback, Brightne
         }
         if (mCustomizePanel != null) {
             mCustomizePanel.updateResources();
+        }
+        if (mBrightnessView != null) {
+            if (isHorizontalLayout()) {
+                mBrightnessView.setVisibility(mBrightnessSliderEnabled ? VISIBLE : INVISIBLE);
+            } else {
+                mBrightnessView.setVisibility(mBrightnessSliderEnabled ? VISIBLE : View.GONE);
+            }
         }
     }
 
@@ -658,6 +672,11 @@ public class QSPanel extends LinearLayout implements Tunable, Callback, Brightne
     private boolean shouldUseHorizontalLayout() {
         return mUsingMediaPlayer && mMediaHost.getVisible()
                 && getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_LANDSCAPE;
+    }
+
+    protected boolean isHorizontalLayout() {
+        return getResources().getConfiguration().orientation
                 == Configuration.ORIENTATION_LANDSCAPE;
     }
 
